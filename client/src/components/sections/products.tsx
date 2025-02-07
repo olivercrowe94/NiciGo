@@ -1,26 +1,48 @@
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { fadeIn, staggerContainer } from "@/lib/animations";
 import { PackageSearch, ShoppingCart, Check } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { type Product } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export function Products() {
+  const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
-  const addToCart = async (productId: number) => {
-    try {
+  const addToCartMutation = useMutation({
+    mutationFn: async (productId: number) => {
       await apiRequest("POST", "/api/cart", {
         productId,
         quantity: 1
       });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      toast({
+        title: "Success",
+        description: "Product added to cart",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add product to cart",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleAddToCart = async (productId: number) => {
+    try {
+      await addToCartMutation.mutateAsync(productId);
       setSelectedPlan(productId);
     } catch (error) {
       console.error("Failed to add to cart:", error);
@@ -67,8 +89,8 @@ export function Products() {
                   <Button
                     size="lg"
                     className="w-full"
-                    onClick={() => addToCart(product.id)}
-                    disabled={selectedPlan === product.id}
+                    onClick={() => handleAddToCart(product.id)}
+                    disabled={selectedPlan === product.id || addToCartMutation.isPending}
                   >
                     {selectedPlan === product.id ? (
                       <>

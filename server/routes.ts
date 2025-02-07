@@ -15,7 +15,11 @@ export function registerRoutes(app: Express) {
       saveUninitialized: true,
       store: new MemoryStoreSession({
         checkPeriod: 86400000 // prune expired entries every 24h
-      })
+      }),
+      cookie: {
+        secure: false, // set to true in production with HTTPS
+        maxAge: 86400000 // 24 hours
+      }
     })
   );
 

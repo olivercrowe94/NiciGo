@@ -22,10 +22,10 @@ export function Hero() {
             size="lg"
             className="text-lg px-8 py-6"
             onClick={() => {
-              document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
+              document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            Join the Waitlist
+            View Plans
           </Button>
         </motion.div>
       </div>

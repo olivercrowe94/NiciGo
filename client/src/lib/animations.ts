@@ -1,6 +1,6 @@
-import { type TargetAndTransition, type Variant } from "framer-motion";
+import { type Variants } from "framer-motion";
 
-export const fadeIn: Record<string, Variant> = {
+export const fadeIn: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -9,13 +9,15 @@ export const fadeIn: Record<string, Variant> = {
   }
 };
 
-export const staggerContainer: TargetAndTransition = {
-  transition: {
-    staggerChildren: 0.2
+export const staggerContainer: Variants = {
+  visible: {
+    transition: {
+      staggerChildren: 0.2
+    }
   }
 };
 
-export const scaleIn: Record<string, Variant> = {
+export const scaleIn: Variants = {
   hidden: { scale: 0.8, opacity: 0 },
   visible: {
     scale: 1,

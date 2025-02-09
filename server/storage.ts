@@ -53,25 +53,40 @@ export class MemStorage implements IStorage {
     // Initialize with default products
     const defaultProducts: InsertProduct[] = [
       {
-        name: "Essential Pack",
-        description: "Perfect starter pack for enhanced focus and clarity",
+        name: "Light Strength Lozenges",
+        description: "2mg nicotine lozenges for lighter cravings",
+        strength: 2,
         packSize: 20,
-        price: "39.99",
-        imageUrl: "/images/product-20.png"
+        price: "24.99",
+        isSubscription: false,
+        imageUrl: "/images/product-2mg.png"
       },
       {
-        name: "Performance Pack",
-        description: "Ideal for consistent users seeking better value",
-        packSize: 40,
-        price: "69.99",
-        imageUrl: "/images/product-40.png"
+        name: "Regular Strength Lozenges",
+        description: "4mg nicotine lozenges for stronger cravings",
+        strength: 4,
+        packSize: 20,
+        price: "29.99",
+        isSubscription: false,
+        imageUrl: "/images/product-4mg.png"
       },
       {
-        name: "Professional Pack",
-        description: "Best value for dedicated high-performers",
+        name: "Monthly Subscription - Light",
+        description: "Customizable monthly delivery of 2mg nicotine lozenges. Save more and earn 10% rewards each month!",
+        strength: 2,
         packSize: 60,
-        price: "89.99",
-        imageUrl: "/images/product-60.png"
+        price: "59.99",
+        isSubscription: true,
+        imageUrl: "/images/subscription-2mg.png"
+      },
+      {
+        name: "Monthly Subscription - Regular",
+        description: "Customizable monthly delivery of 4mg nicotine lozenges. Save more and earn 10% rewards each month!",
+        strength: 4,
+        packSize: 60,
+        price: "69.99",
+        isSubscription: true,
+        imageUrl: "/images/subscription-4mg.png"
       }
     ];
 

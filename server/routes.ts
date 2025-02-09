@@ -2,26 +2,11 @@ import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema } from "@shared/schema";
-import session from "express-session";
-import MemoryStore from "memorystore";
+import { setupAuth } from "./auth";
 
 export function registerRoutes(app: Express) {
-  // Setup session middleware
-  const MemoryStoreSession = MemoryStore(session);
-  app.use(
-    session({
-      secret: "your-secret-key",
-      resave: false,
-      saveUninitialized: true,
-      store: new MemoryStoreSession({
-        checkPeriod: 86400000 // prune expired entries every 24h
-      }),
-      cookie: {
-        secure: false, // set to true in production with HTTPS
-        maxAge: 86400000 // 24 hours
-      }
-    })
-  );
+  // Setup authentication routes and middleware
+  setupAuth(app);
 
   // Product routes
   app.get("/api/products", async (_req, res) => {

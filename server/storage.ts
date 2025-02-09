@@ -1,10 +1,19 @@
 import { 
-  products, cartItems,
-  type Product, type CartItem,
-  type InsertProduct, type InsertCartItem 
+  products, cartItems, users,
+  type Product, type CartItem, type User,
+  type InsertProduct, type InsertCartItem, type InsertUser
 } from "@shared/schema";
+import session from "express-session";
+import createMemoryStore from "memorystore";
+
+const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
+  // User operations
+  createUser(user: Omit<InsertUser, "confirmPassword">): Promise<User>;
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+
   // Product operations
   getProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
@@ -14,19 +23,32 @@ export interface IStorage {
   addToCart(item: InsertCartItem): Promise<CartItem>;
   updateCartItem(id: number, quantity: number): Promise<CartItem | undefined>;
   removeFromCart(id: number): Promise<void>;
+
+  // Session store
+  sessionStore: session.Store;
 }
 
 export class MemStorage implements IStorage {
+  private users: Map<number, User>;
+  private usernameToId: Map<string, number>;
   private products: Map<number, Product>;
   private cartItems: Map<number, CartItem>;
+  private currentUserId: number;
   private currentProductId: number;
   private currentCartItemId: number;
+  readonly sessionStore: session.Store;
 
   constructor() {
+    this.users = new Map();
+    this.usernameToId = new Map();
     this.products = new Map();
     this.cartItems = new Map();
+    this.currentUserId = 1;
     this.currentProductId = 1;
     this.currentCartItemId = 1;
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000,
+    });
 
     // Initialize with default products
     const defaultProducts: InsertProduct[] = [
@@ -59,6 +81,30 @@ export class MemStorage implements IStorage {
     });
   }
 
+  // User operations
+  async createUser(userData: Omit<InsertUser, "confirmPassword">): Promise<User> {
+    const id = this.currentUserId++;
+    const user: User = {
+      ...userData,
+      id,
+      createdAt: new Date()
+    };
+    this.users.set(id, user);
+    this.usernameToId.set(userData.username, id);
+    return user;
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const id = this.usernameToId.get(username);
+    if (!id) return undefined;
+    return this.users.get(id);
+  }
+
+  // Product operations
   async getProducts(): Promise<Product[]> {
     return Array.from(this.products.values());
   }
@@ -67,6 +113,7 @@ export class MemStorage implements IStorage {
     return this.products.get(id);
   }
 
+  // Cart operations
   async getCartItems(sessionId: string): Promise<CartItem[]> {
     return Array.from(this.cartItems.values()).filter(
       item => item.sessionId === sessionId

@@ -28,12 +28,6 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
 
-  // Redirect if already logged in
-  if (user) {
-    setLocation("/");
-    return null;
-  }
-
   const loginForm = useForm({
     defaultValues: {
       username: "",
@@ -58,6 +52,12 @@ export default function AuthPage() {
   const onRegister = registerForm.handleSubmit((data: InsertUser) => {
     registerMutation.mutate(data);
   });
+
+  // Only redirect after all hooks are called
+  if (user) {
+    setTimeout(() => setLocation("/"), 0);
+    return null;
+  }
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">

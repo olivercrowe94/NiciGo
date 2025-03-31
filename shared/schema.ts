@@ -1,64 +1,52 @@
-import { pgTable, text, serial, integer, decimal, timestamp, boolean } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  name: text("name").notNull(),
-  rewardBalance: decimal("reward_balance", { precision: 10, scale: 2 }).default("0").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+// User interface
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  rewardBalance: number;
+  createdAt: Date;
+}
+
+// Product interface
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  isSubscription: boolean;
+}
+
+// Cart item interface
+export interface CartItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  product: Product;
+  sessionId: string;
+}
+
+// Validation schemas using Zod
+export const userSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(1, "Name is required"),
 });
 
-export const products = pgTable("products", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-  strength: integer("strength").notNull(), // in mg
-  packSize: integer("pack_size").notNull(),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  isSubscription: boolean("is_subscription").default(false).notNull(),
-  imageUrl: text("image_url").notNull()
+export const productSchema = z.object({
+  name: z.string().min(1, "Product name is required"),
+  description: z.string().min(1, "Description is required"),
+  price: z.number().positive("Price must be positive"),
+  isSubscription: z.boolean().default(false),
 });
 
-export const cartItems = pgTable("cart_items", {
-  id: serial("id").primaryKey(),
-  productId: integer("product_id").notNull(),
-  quantity: integer("quantity").notNull(),
-  sessionId: text("session_id").notNull()
+export const cartItemSchema = z.object({
+  productId: z.string(),
+  quantity: z.number().int().positive("Quantity must be at least 1"),
 });
 
-export const insertUserSchema = createInsertSchema(users)
-  .omit({ 
-    id: true,
-    createdAt: true,
-    rewardBalance: true
-  })
-  .extend({
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string()
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
-export const insertProductSchema = createInsertSchema(products).omit({ 
-  id: true 
-});
-
-export const insertCartItemSchema = createInsertSchema(cartItems)
-  .omit({ 
-    id: true 
-  })
-  .extend({
-    quantity: z.number().min(1, "Quantity must be at least 1")
-  });
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
-export type User = typeof users.$inferSelect;
-export type Product = typeof products.$inferSelect;
-export type CartItem = typeof cartItems.$inferSelect;
+// Type aliases for form data
+export type UserFormData = z.infer<typeof userSchema>;
+export type ProductFormData = z.infer<typeof productSchema>;
+export type CartItemFormData = z.infer<typeof cartItemSchema>;

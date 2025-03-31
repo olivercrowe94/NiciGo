@@ -1,7 +1,6 @@
 import { 
-  products, cartItems, users,
   type Product, type CartItem, type User,
-  type InsertProduct, type InsertCartItem, type InsertUser
+  type ProductFormData, type CartItemFormData, type UserFormData
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -10,32 +9,29 @@ const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   // User operations
-  createUser(user: Omit<InsertUser, "confirmPassword">): Promise<User>;
-  getUser(id: number): Promise<User | undefined>;
+  createUser(user: UserFormData): Promise<User>;
+  getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
 
   // Product operations
   getProducts(): Promise<Product[]>;
-  getProduct(id: number): Promise<Product | undefined>;
+  getProduct(id: string): Promise<Product | undefined>;
 
   // Cart operations
   getCartItems(sessionId: string): Promise<CartItem[]>;
-  addToCart(item: InsertCartItem): Promise<CartItem>;
-  updateCartItem(id: number, quantity: number): Promise<CartItem | undefined>;
-  removeFromCart(id: number): Promise<void>;
+  addToCart(item: CartItemFormData & { sessionId: string }): Promise<CartItem>;
+  updateCartItem(id: string, quantity: number): Promise<CartItem | undefined>;
+  removeFromCart(id: string): Promise<void>;
 
   // Session store
   sessionStore: session.Store;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private usernameToId: Map<string, number>;
-  private products: Map<number, Product>;
-  private cartItems: Map<number, CartItem>;
-  private currentUserId: number;
-  private currentProductId: number;
-  private currentCartItemId: number;
+  private users: Map<string, User>;
+  private usernameToId: Map<string, string>;
+  private products: Map<string, Product>;
+  private cartItems: Map<string, CartItem>;
   readonly sessionStore: session.Store;
 
   constructor() {
@@ -43,65 +39,40 @@ export class MemStorage implements IStorage {
     this.usernameToId = new Map();
     this.products = new Map();
     this.cartItems = new Map();
-    this.currentUserId = 1;
-    this.currentProductId = 1;
-    this.currentCartItemId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
     });
 
     // Initialize with default products
-    const defaultProducts: InsertProduct[] = [
+    const defaultProducts: (ProductFormData & { id: string })[] = [
       {
-        name: "Light Strength Lozenges",
-        description: "2mg nicotine lozenges for lighter cravings",
-        strength: 2,
-        packSize: 20,
-        price: "24.99",
-        isSubscription: false,
-        imageUrl: "/images/product-2mg.png"
+        id: "1",
+        name: "2mg Nicotine Lozenge",
+        description: "Our 2mg nicotine lozenge provides a gentle cognitive boost for improved focus and mental clarity.",
+        price: 24.99,
+        isSubscription: false
       },
       {
-        name: "Regular Strength Lozenges",
-        description: "4mg nicotine lozenges for stronger cravings",
-        strength: 4,
-        packSize: 20,
-        price: "29.99",
-        isSubscription: false,
-        imageUrl: "/images/product-4mg.png"
-      },
-      {
-        name: "Monthly Subscription - Light",
-        description: "Customizable monthly delivery of 2mg nicotine lozenges. Save more and earn 10% rewards each month!",
-        strength: 2,
-        packSize: 60,
-        price: "59.99",
-        isSubscription: true,
-        imageUrl: "/images/subscription-2mg.png"
-      },
-      {
-        name: "Monthly Subscription - Regular",
-        description: "Customizable monthly delivery of 4mg nicotine lozenges. Save more and earn 10% rewards each month!",
-        strength: 4,
-        packSize: 60,
-        price: "69.99",
-        isSubscription: true,
-        imageUrl: "/images/subscription-4mg.png"
+        id: "2",
+        name: "4mg Nicotine Lozenge",
+        description: "Our 4mg nicotine lozenge delivers maximum cognitive enhancement for peak mental performance and intense focus.",
+        price: 29.99,
+        isSubscription: true
       }
     ];
 
     defaultProducts.forEach(product => {
-      const id = this.currentProductId++;
-      this.products.set(id, { ...product, id });
+      this.products.set(product.id, product);
     });
   }
 
   // User operations
-  async createUser(userData: Omit<InsertUser, "confirmPassword">): Promise<User> {
-    const id = this.currentUserId++;
+  async createUser(userData: UserFormData): Promise<User> {
+    const id = Date.now().toString();
     const user: User = {
       ...userData,
       id,
+      rewardBalance: 0,
       createdAt: new Date()
     };
     this.users.set(id, user);
@@ -109,7 +80,7 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
   }
 
@@ -124,7 +95,7 @@ export class MemStorage implements IStorage {
     return Array.from(this.products.values());
   }
 
-  async getProduct(id: number): Promise<Product | undefined> {
+  async getProduct(id: string): Promise<Product | undefined> {
     return this.products.get(id);
   }
 
@@ -135,14 +106,24 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async addToCart(item: InsertCartItem): Promise<CartItem> {
-    const id = this.currentCartItemId++;
-    const cartItem: CartItem = { ...item, id };
+  async addToCart(item: CartItemFormData & { sessionId: string }): Promise<CartItem> {
+    const id = Date.now().toString();
+    const product = this.products.get(item.productId);
+    if (!product) {
+      throw new Error("Product not found");
+    }
+    
+    const cartItem: CartItem = { 
+      ...item, 
+      id,
+      product
+    };
+    
     this.cartItems.set(id, cartItem);
     return cartItem;
   }
 
-  async updateCartItem(id: number, quantity: number): Promise<CartItem | undefined> {
+  async updateCartItem(id: string, quantity: number): Promise<CartItem | undefined> {
     const item = this.cartItems.get(id);
     if (!item) return undefined;
 
@@ -151,7 +132,7 @@ export class MemStorage implements IStorage {
     return updatedItem;
   }
 
-  async removeFromCart(id: number): Promise<void> {
+  async removeFromCart(id: string): Promise<void> {
     this.cartItems.delete(id);
   }
 }

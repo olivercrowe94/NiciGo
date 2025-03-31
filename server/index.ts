@@ -1,15 +1,51 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { createServer, type Server } from "http";
-import { AddressInfo } from "net";
-import { PrismaClient } from "@prisma/client";
+import { createServer } from "http";
 import cors from "cors";
 import bodyParser from "body-parser";
 import net from 'net';
 
 // Set a different initial port to avoid conflicts with client
 const PORT = 5003;
+
+// Product interface
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  isSubscription: boolean;
+}
+
+// Cart item interface
+interface CartItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  product: Product;
+}
+
+// Mock data for products
+const mockProducts: Product[] = [
+  {
+    id: "1",
+    name: "2mg Nicotine Lozenge",
+    description: "Our 2mg nicotine lozenge provides a gentle cognitive boost for improved focus and mental clarity.",
+    price: 24.99,
+    isSubscription: false
+  },
+  {
+    id: "2",
+    name: "4mg Nicotine Lozenge",
+    description: "Our 4mg nicotine lozenge delivers maximum cognitive enhancement for peak mental performance and intense focus.",
+    price: 29.99,
+    isSubscription: true
+  }
+];
+
+// Mock cart data
+let mockCart: CartItem[] = [];
 
 // Function to check if a port is in use
 async function isPortInUse(port: number): Promise<boolean> {
@@ -53,26 +89,10 @@ async function findAvailablePort(startPort: number): Promise<number> {
 }
 
 const app = express();
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
-});
-
-// Test database connection
-async function testDatabaseConnection() {
-  try {
-    // Try a simple query to test connection
-    await prisma.$queryRaw`SELECT 1`;
-    console.log('✅ Database connection successful');
-    return true;
-  } catch (error) {
-    console.error('❌ Database connection failed:', error);
-    return false;
-  }
-}
 
 // Apply CORS with specific configuration
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'], // Allow these origins
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174', 'http://localhost:5175'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -111,79 +131,41 @@ app.use((req, res, next) => {
   next();
 });
 
-// Get all tasks
-app.get("/api/tasks", async (req, res) => {
-  try {
-    const tasks = await prisma.task.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    res.json(tasks);
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    res.status(500).json({ error: "Failed to fetch tasks" });
-  }
+// Get all products
+app.get("/api/products", (req, res) => {
+  res.json(mockProducts);
 });
 
-// Create a new task
-app.post("/api/tasks", async (req, res) => {
-  try {
-    const { title } = req.body;
-    if (!title || title.trim() === "") {
-      return res.status(400).json({ error: "Title is required" });
-    }
-
-    const task = await prisma.task.create({
-      data: {
-        title,
-        completed: false,
-      },
-    });
-    res.status(201).json(task);
-  } catch (error) {
-    console.error("Error creating task:", error);
-    res.status(500).json({ error: "Failed to create task" });
-  }
+// Get cart
+app.get("/api/cart", (req, res) => {
+  res.json(mockCart);
 });
 
-// Update a task
-app.put("/api/tasks/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { completed } = req.body;
-
-    const task = await prisma.task.update({
-      where: { id },
-      data: { completed },
-    });
-    res.json(task);
-  } catch (error) {
-    console.error("Error updating task:", error);
-    res.status(500).json({ error: "Failed to update task" });
+// Add item to cart
+app.post("/api/cart", (req, res) => {
+  const { productId, quantity } = req.body;
+  
+  // Find product
+  const product = mockProducts.find(p => p.id === productId);
+  if (!product) {
+    return res.status(404).json({ error: "Product not found" });
   }
-});
-
-// Delete a task
-app.delete("/api/tasks/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    await prisma.task.delete({
-      where: { id },
-    });
-    res.json({ message: "Task deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting task:", error);
-    res.status(500).json({ error: "Failed to delete task" });
-  }
+  
+  // Add to cart
+  mockCart.push({
+    id: Date.now().toString(),
+    productId,
+    quantity,
+    product
+  });
+  
+  res.status(201).json({ message: "Product added to cart" });
 });
 
 // Start the server
 (async () => {
   try {
-    // Test database connection first
-    const isConnected = await testDatabaseConnection();
-    if (!isConnected) {
-      console.error('Failed to connect to database. Server will start, but API endpoints may not work.');
-    }
+    console.log('Starting server with mock data (no database connection)');
     
     const server = registerRoutes(app);
     const availablePort = await findAvailablePort(PORT);
@@ -208,13 +190,12 @@ app.delete("/api/tasks/:id", async (req, res) => {
     // Use the available port instead of hardcoded one
     server.listen(availablePort, "0.0.0.0", () => {
       console.log(`Server running on port ${availablePort}`);
-      console.log(`API available at http://localhost:${availablePort}/api/tasks`);
+      console.log(`API available at http://localhost:${availablePort}/api/products`);
     });
 
     // Handle server shutdown gracefully
     process.on('SIGINT', async () => {
       console.log('Shutting down server...');
-      await prisma.$disconnect();
       server.close(() => {
         console.log('Server closed');
         process.exit(0);
@@ -222,7 +203,6 @@ app.delete("/api/tasks/:id", async (req, res) => {
     });
   } catch (error) {
     console.error('Failed to start server:', error);
-    await prisma.$disconnect();
     process.exit(1);
   }
 })();

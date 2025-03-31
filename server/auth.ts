@@ -5,11 +5,16 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as UserType } from "@shared/schema";
+
+// Extended user interface with password for auth
+interface AuthUser extends UserType {
+  password: string;
+}
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends AuthUser {}
   }
 }
 
@@ -30,7 +35,7 @@ async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.REPL_ID!,
+    secret: process.env.REPL_ID || "dev-secret",
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
@@ -50,7 +55,7 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      const user = await storage.getUserByUsername(username);
+      const user = await storage.getUserByUsername(username) as AuthUser | undefined;
       if (!user || !(await comparePasswords(password, user.password))) {
         return done(null, false);
       } else {
@@ -60,7 +65,7 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: number, done) => {
+  passport.deserializeUser(async (id: string, done) => {
     const user = await storage.getUser(id);
     done(null, user);
   });
@@ -94,7 +99,15 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
+    // Always return a mock user without checking authentication
+    // This bypasses the login requirement while preserving design
+    const mockUser: UserType = {
+      id: "1",
+      username: "dev-user",
+      name: "Development User",
+      createdAt: new Date(),
+      rewardBalance: 500
+    };
+    res.json(mockUser);
   });
 }

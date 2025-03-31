@@ -11,6 +11,15 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
+        // Zone brand colors
+        "deep-charcoal": "#1E2122",
+        "soft-mint": "#B6E5C7",
+        "pure-white": "#FFFFFF",
+        "focus-orange": "#FF7A3D",
+        "cool-gray": "#F2F2F2",
+        "midnight-blue": "#1A2332",
+        
+        // Existing shadcn colors
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -61,6 +70,14 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      fontFamily: {
+        heading: ["Montserrat", "sans-serif"],
+        body: ["Inter", "sans-serif"],
+        sans: ["Inter", "sans-serif"],
+      },
+      fontSize: {
+        nav: ["14px", { lineHeight: "20px", letterSpacing: "0.5px" }],
       },
       keyframes: {
         "accordion-down": {

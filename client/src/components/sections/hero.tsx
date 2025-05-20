@@ -25,11 +25,11 @@ export function Hero() {
               Discover our clinically-tested nicotine lozenges available in 2mg and 4mg strengths for improved cognitive performance and mental agility.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button size="lg">
-                SHOP NOW
+              <Button size="lg" asChild>
+                <a href="#store">SHOP NOW</a>
               </Button>
-              <Button variant="outline" size="lg">
-                LEARN MORE
+              <Button variant="outline" size="lg" asChild>
+                <a href="#benefits">LEARN MORE</a>
               </Button>
             </div>
           </motion.div>

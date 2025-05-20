@@ -26,7 +26,8 @@ interface Product {
 
 export function Products() {
   const { toast } = useToast();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [selectedStandardPlan, setSelectedStandardPlan] = useState<string | null>(null);
+  const [selectedPremiumPlan, setSelectedPremiumPlan] = useState<string | null>(null);
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -55,10 +56,14 @@ export function Products() {
     }
   });
 
-  const handleAddToCart = async (productId: string) => {
+  const handleAddToCart = async (productId: string, isPremium: boolean) => {
     try {
       await addToCartMutation.mutateAsync(productId);
-      setSelectedPlan(productId);
+      if (isPremium) {
+        setSelectedPremiumPlan(productId);
+      } else {
+        setSelectedStandardPlan(productId);
+      }
     } catch (error) {
       console.error("Failed to add to cart:", error);
     }
@@ -134,7 +139,7 @@ export function Products() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-3xl font-heading font-light mb-4">
-                        ${Number(product.price || 24.99).toFixed(2)}
+                        £{Number(product.price || 19.99).toFixed(2)}
                       </p>
                       <p className="text-pure-white/70 mb-6">
                         {product.description || "Our 2mg nicotine lozenge provides a gentle cognitive boost for improved focus and mental clarity."}
@@ -154,10 +159,10 @@ export function Products() {
                       <Button
                         size="lg"
                         className="w-full"
-                        onClick={() => handleAddToCart(product.id)}
-                        disabled={selectedPlan === product.id || addToCartMutation.isPending}
+                        onClick={() => handleAddToCart(product.id, false)}
+                        disabled={selectedStandardPlan === product.id || addToCartMutation.isPending}
                       >
-                        {selectedPlan === product.id ? (
+                        {selectedStandardPlan === product.id ? (
                           <>
                             <Check className="mr-2 h-4 w-4" /> ADDED TO CART
                           </>
@@ -184,7 +189,7 @@ export function Products() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-3xl font-heading font-light mb-4">
-                        $24.99
+                        £24.99
                       </p>
                       <p className="text-pure-white/70 mb-6">
                         Our 2mg nicotine lozenge provides a gentle cognitive boost for improved focus and mental clarity.
@@ -235,7 +240,7 @@ export function Products() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-3xl font-heading font-light mb-4">
-                        ${Number(product.price || 29.99).toFixed(2)}
+                        £{Number(product.price || 24.99).toFixed(2)}
                       </p>
                       <p className="text-pure-white/70 mb-6">
                         {product.description || "Our 4mg nicotine lozenge delivers maximum cognitive enhancement for peak mental performance and intense focus."}
@@ -263,10 +268,10 @@ export function Products() {
                       <Button
                         size="lg"
                         className="w-full"
-                        onClick={() => handleAddToCart(product.id)}
-                        disabled={selectedPlan === product.id || addToCartMutation.isPending}
+                        onClick={() => handleAddToCart(product.id, true)}
+                        disabled={selectedPremiumPlan === product.id || addToCartMutation.isPending}
                       >
-                        {selectedPlan === product.id ? (
+                        {selectedPremiumPlan === product.id ? (
                           <>
                             <Check className="mr-2 h-4 w-4" /> ADDED TO CART
                           </>
@@ -298,7 +303,7 @@ export function Products() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-3xl font-heading font-light mb-4">
-                        $29.99
+                        £29.99
                       </p>
                       <p className="text-pure-white/70 mb-6">
                         Our 4mg nicotine lozenge delivers maximum cognitive enhancement for peak mental performance and intense focus.
@@ -326,8 +331,18 @@ export function Products() {
                       <Button
                         size="lg"
                         className="w-full"
+                        onClick={() => handleAddToCart("premium-lozenge", true)}
+                        disabled={selectedPremiumPlan === "premium-lozenge" || addToCartMutation.isPending}
                       >
-                        ADD TO CART
+                        {selectedPremiumPlan === "premium-lozenge" ? (
+                          <>
+                            <Check className="mr-2 h-4 w-4" /> ADDED TO CART
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="mr-2 h-4 w-4" /> ADD TO CART
+                          </>
+                        )}
                       </Button>
                     </CardFooter>
                   </Card>

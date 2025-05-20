@@ -25,7 +25,7 @@ const storeProducts: Product[] = [
     id: "standard-lozenge",
     name: "NiciGo 2mg Lozenge",
     description: "Our 2mg nicotine lozenge provides a gentle cognitive boost for improved focus and mental clarity.",
-    price: 24.99,
+    price: 19.99,
     strength: "2mg",
     image: "https://images.unsplash.com/photo-1563450474027-6f8d3e3cf8c1"
   },
@@ -33,7 +33,7 @@ const storeProducts: Product[] = [
     id: "premium-lozenge",
     name: "NiciGo 4mg Lozenge",
     description: "Our 4mg nicotine lozenge delivers maximum cognitive enhancement for peak mental performance and intense focus.",
-    price: 29.99,
+    price: 24.99,
     strength: "4mg",
     image: "https://images.unsplash.com/photo-1584017197348-33e4a63a5dfe"
   }
@@ -112,7 +112,7 @@ export function Store() {
                 </div>
                 <CardHeader>
                   <h3 className="text-2xl font-heading font-light">{product.name}</h3>
-                  <p className="text-3xl font-heading font-light mt-2">${product.price.toFixed(2)}</p>
+                  <p className="text-3xl font-heading font-light mt-2">£{product.price.toFixed(2)}</p>
                 </CardHeader>
                 <CardContent>
                   <p className="text-pure-white/70">{product.description}</p>

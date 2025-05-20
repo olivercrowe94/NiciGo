@@ -11,14 +11,12 @@ import { ZapIcon, TwitterIcon, FacebookIcon, InstagramIcon } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ChakraProvider } from "@chakra-ui/react";
-import { TaskApp } from "./pages/TaskApp";
 import { AuthProvider } from "@/hooks/use-auth";
 
 const Router = () => {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/tasks" component={TaskApp} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -30,9 +28,7 @@ function NavigationBar() {
   const navItems = [
     { id: "about", label: "ABOUT", href: "#" },
     { id: "benefits", label: "BENEFITS", href: "#benefits" },
-    { id: "science", label: "SCIENCE", href: "#science" },
-    { id: "reviews", label: "REVIEWS", href: "#reviews" },
-    { id: "tasks", label: "TASKS", href: "/tasks" }
+    { id: "store", label: "STORE", href: "#store" }
   ];
   
   return (

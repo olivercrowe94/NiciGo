@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "@/lib/animations";
-import { Brain, Focus, Lightbulb, Clock, Zap } from "lucide-react";
+import { Brain, Focus, Lightbulb, Clock, Zap, Beaker, FlaskConical, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 const benefits = [
   {
@@ -31,9 +32,27 @@ const benefits = [
   }
 ];
 
+const scienceCards = [
+  {
+    icon: Beaker,
+    title: "Cognitive Enhancement",
+    description: "Nicotine has been extensively studied for its ability to enhance cognitive function. Research shows it can improve attention, focus, and memory formation through its action on nicotinic acetylcholine receptors."
+  },
+  {
+    icon: FlaskConical,
+    title: "Precision Formulation",
+    description: "Our 2mg and 4mg nicotine lozenges are precisely formulated to provide optimal cognitive benefits with minimal side effects. Our proprietary delivery system ensures consistent release for sustained performance."
+  },
+  {
+    icon: BookOpen,
+    title: "Clinical Evidence",
+    description: "Clinical studies have shown that controlled nicotine administration can significantly improve attention span, working memory, and information processing speed. Our lozenges provide a clean, controlled delivery method without the harmful effects associated with smoking."
+  }
+];
+
 export function Benefits() {
   return (
-    <section className="py-24 bg-deep-charcoal relative overflow-hidden">
+    <section className="py-24 bg-deep-charcoal relative overflow-hidden" id="benefits">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-soft-mint/20 to-transparent"></div>
       
       <motion.div 
@@ -67,7 +86,7 @@ export function Benefits() {
           </motion.div>
         </div>
         
-        <div className="space-y-8">
+        <div className="space-y-8 mb-24">
           {benefits.map((benefit, index) => (
             <motion.div 
               key={index} 
@@ -86,6 +105,29 @@ export function Benefits() {
             </motion.div>
           ))}
         </div>
+
+        <motion.div variants={fadeIn} className="mt-20">
+          <h2 className="text-3xl md:text-4xl font-heading font-light mb-12 text-center">
+            The <span className="text-soft-mint">Science</span> Behind NiciGo
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {scienceCards.map((card, index) => (
+              <motion.div key={index} variants={fadeIn}>
+                <Card className="bg-card/50 h-full">
+                  <CardContent className="p-6">
+                    <div className="w-12 h-12 rounded-full bg-soft-mint/10 flex items-center justify-center mb-4">
+                      <card.icon className="w-6 h-6 text-soft-mint" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">{card.title}</h3>
+                    <p className="text-pure-white/70">
+                      {card.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       </motion.div>
       
       <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-focus-orange/5 rounded-full filter blur-3xl"></div>
